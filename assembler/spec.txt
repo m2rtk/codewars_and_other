@@ -1,0 +1,30 @@
+program : (line EOL)*
+        ;
+
+line : instruction
+     | instruction COMMENT
+     | COMMENT
+     ;
+
+instruction : COMMAND
+            | COMMAND ARG
+            | COMMAND ARG ARG
+            | LABEL
+            ;
+
+COMMAND
+    : [a-zA-Z]+
+    ;
+
+ARG
+    : word
+    | str
+    | num
+    ;
+
+EOL
+    : [\r\n]
+    ;
+
+COMMENT
+    : ';' ~ [\r\n]*
