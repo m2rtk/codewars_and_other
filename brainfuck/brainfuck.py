@@ -3,32 +3,41 @@ import sys
 
 class Engine:
     def __init__(self, code, debug=False):
-        self.tokens = [c for c in code if c in "><+-.,[]"]
+        self.command_mapping = self._generate_command_mapping()
+        self.tokens = [t for t in code if t in self.command_mapping]
         self.tape = [0]
         self.pointer = 0
         self.pos = 0
         self.debug = debug
+        self.debug_output = ""
+
+    def _generate_command_mapping(self):
+        return {
+            '>': self.mov_right,
+            '<': self.mov_left,
+            '+': self.increment,
+            '-': self.decrement,
+            '.': self.output,
+            ',': self.input,
+            '[': self.jump_if_zero,
+            ']': self.jump_if_not_zero,
+        }
+
+    def debug_print(self):
+        if self.debug:
+            print(f"{''.join(self.tokens)}")
+            print(f"{' ' * self.pos}^ {self.pos}")
+            print(f"tape: {self.tape}.at(pointer={self.pointer}) => {self.tape[self.pointer]}")
+            print(f"current output: '{self.debug_output}'")
+            print()
 
     def execute(self):
+        self.debug_print()
         while self.pos < len(self.tokens):
-            f = {
-                '>': self.mov_right,
-                '<': self.mov_left,
-                '+': self.increment,
-                '-': self.decrement,
-                '.': self.output,
-                ',': self.input,
-                '[': self.jump_if_zero,
-                ']': self.jump_if_not_zero,
-            }[self.tokens[self.pos]]
-            if self.debug:
-                print(self.pos)
-                print(self.tape)
-                print(self.pointer)
-                print(f.__name__)
-                print()
+            f = self.command_mapping[self.tokens[self.pos]]
             self.pos += 1
             f()
+            self.debug_print()
 
     def mov_right(self):
         self.pointer += 1
@@ -51,6 +60,9 @@ class Engine:
     def output(self):
         print(chr(self.tape[self.pointer]), end='')
 
+        if self.debug:
+            self.debug_output += chr(self.tape[self.pointer])
+
     def input(self):
         self.tape[self.pointer] = ord(sys.stdin.read(1))
 
@@ -65,15 +77,20 @@ class Engine:
     def jump_if_not_zero(self):
         if self.tape[self.pointer] != 0:
             new_pos = self.pos
-            open = 0
+            open_brackets = 0
 
             while new_pos > -1:
                 new_pos -= 1
-                c = self.tokens[new_pos]
-                if c == ']': open += 1
-                elif c == '[': open -= 1
+                t = self.tokens[new_pos]
 
-                if open == 0:
+                if t == ']':
+                    open_brackets += 1
+                elif t == '[':
+                    open_brackets -= 1
+                else:
+                    continue
+
+                if open_brackets == 0:
                     break
 
             self.pos = new_pos
@@ -81,8 +98,5 @@ class Engine:
 
 if __name__ == '__main__':
     c = "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++."
-    #c = ">++++++++[-<+++++++++>]<.>>+>-[+]++>++>+++[>[->+++<<+++>]<<]>-----.>->+++..+++.>-.<<+[>[+>+]>>]<--------------.>>.+++.------.--------.>+.>+."
-    c = "--<-<<+[+[<+>--->->->-<<<]>]<<--.<++++++.<<-..<<.<+.>>.>>.<<<.+++.>>.>>-.<<<+."
-    #c = "+[-->-[>>+>-----<<]<--<---]>-.>>>+.>>..+++[.>]<<<<.+++.------.<<-.>>>>+."
-    e = Engine(c, False)
+    e = Engine(c, True)
     e.execute()

@@ -61,6 +61,3 @@ class Solution:
             l2 = l2.next
 
         return [int(s) for s in str(int(l01) + int(l02))]
-
-
-print(Solution().addTwoNumbers(ListNode(2, ListNode(4, ListNode(3))), ListNode(5, ListNode(6, ListNode(4)))))

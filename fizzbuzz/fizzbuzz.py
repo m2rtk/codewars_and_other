@@ -12,7 +12,3 @@ def fizz1(x):
     for num, s in [(15, "FizzBuzz"), (5, "Buzz"), (3, "Fizz")]:
         if x % num == 0: return s
     return str(x)
-
-
-for val in map(fizz1, range(1, 101)):
-    print(val)
