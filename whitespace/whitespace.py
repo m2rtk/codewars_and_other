@@ -22,11 +22,7 @@ NUMBER = 0
 LABEL = 1
 
 
-def unbleach(n):
-    return n.replace(' ', 's').replace('\t', 't').replace('\n', 'n')
-
-
-def whitespace(code, inp = '', debug = False):
+def whitespace(code, inp='', debug=False):
     engine = WhitespaceInterpreter(
         code,
         inp=inp,
@@ -40,13 +36,14 @@ def whitespace(code, inp = '', debug = False):
 
 # noinspection PyDefaultArgument
 class WhitespaceInterpreter:
-    def __init__(self, code, inp = '', stack = [], heap = {}, debug = False):
+    def __init__(self, code, inp='', stack=[], heap={}, debug=False, output_to_stdout=True):
         self.code = code
         self.tokens = list(map(Symbol, filter(Symbol.exists, code)))
         self.inp = inp
         self.heap = heap
         self.stack = stack
         self.debug = debug
+        self.output_to_stdout = output_to_stdout
         self.output = ''
         self.pos = 0
         self.commands = []
@@ -248,12 +245,14 @@ class IO(Controller):
             a = chr(a)
 
         self.engine.output += a
-        print(a, end='')
+        if self.engine.output_to_stdout:
+            print(a, end='')
 
     def print_num(self):
         a = str(self.engine.stack.pop())
         self.engine.output += str(self.engine.stack.pop())
-        print(a, end='')
+        if self.engine.output_to_stdout:
+            print(a, end='')
 
     def input_char(self):
         self._do_input(self._read_next_char)
@@ -323,9 +322,12 @@ class Parser:
 
     def parse_number(self):
         sign_token = self.next_token()
-        if   sign_token is SPACE: sign =  1
-        elif sign_token is TAB:   sign = -1
-        else: raise RuntimeError("Invalid number, no sign specified")
+        if sign_token is SPACE:
+            sign = 1
+        elif sign_token is TAB:
+            sign = -1
+        else:
+            raise RuntimeError("Invalid number, no sign specified")
 
         acc = ""
 
@@ -353,14 +355,14 @@ class Parser:
         return label
 
     def parse_next_command(self, current=()):
-        current += (self.next_token(), )
+        current += (self.next_token(),)
 
         if current in self.engine.full_mapping:
             return self.engine.full_mapping[current]
-        elif current + (NUMBER, ) in self.engine.full_mapping:
-            return self.engine.full_mapping[current + (NUMBER, )], self.parse_number()
-        elif current + (LABEL, ) in self.engine.full_mapping:
-            return self.engine.full_mapping[current + (LABEL, )], self.parse_label()
+        elif current + (NUMBER,) in self.engine.full_mapping:
+            return self.engine.full_mapping[current + (NUMBER,)], self.parse_number()
+        elif current + (LABEL,) in self.engine.full_mapping:
+            return self.engine.full_mapping[current + (LABEL,)], self.parse_label()
         else:
             return self.parse_next_command(current)
 

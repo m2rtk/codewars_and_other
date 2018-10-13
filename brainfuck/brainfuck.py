@@ -1,7 +1,7 @@
 import sys
 
 
-class Engine:
+class BrainfuckInterpreter:
     def __init__(self, code, debug=False):
         self.command_mapping = self._generate_command_mapping()
         self.tokens = [t for t in code if t in self.command_mapping]
@@ -94,9 +94,3 @@ class Engine:
                     break
 
             self.pos = new_pos
-
-
-if __name__ == '__main__':
-    c = "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++."
-    e = Engine(c, True)
-    e.execute()
