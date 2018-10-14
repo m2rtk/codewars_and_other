@@ -5,11 +5,13 @@ class BrainfuckInterpreter:
     def __init__(self, code, debug=False):
         self.command_mapping = self._generate_command_mapping()
         self.tokens = [t for t in code if t in self.command_mapping]
+        self.bracket_pairs = self._generate_bracket_pairs()
+        self.debug = debug
+        self.debug_output = ""
+
         self.tape = [0]
         self.pointer = 0
         self.pos = 0
-        self.debug = debug
-        self.debug_output = ""
 
     def _generate_command_mapping(self):
         return {
@@ -22,6 +24,26 @@ class BrainfuckInterpreter:
             '[': self.jump_if_zero,
             ']': self.jump_if_not_zero,
         }
+
+    def _generate_bracket_pairs(self):
+        pairs = {}
+        open_stack = []
+        for i, t in filter(lambda x: x[1] in '[]', enumerate(self.tokens)):
+            if t == '[':
+                open_stack.append(i)
+            elif t == ']':
+                if not open_stack:
+                    raise RuntimeError("Unmatched ']'")
+
+                start = open_stack.pop()
+                end = i
+                pairs[start] = end
+                pairs[end] = start
+
+        if open_stack:
+            raise RuntimeError("Unmatched '['")
+
+        return pairs
 
     def debug_print(self):
         if self.debug:
@@ -64,33 +86,14 @@ class BrainfuckInterpreter:
             self.debug_output += chr(self.tape[self.pointer])
 
     def input(self):
-        self.tape[self.pointer] = ord(sys.stdin.read(1))
+        byte = sys.stdin.read(1)
+        if byte:
+            self.tape[self.pointer] = ord(byte)
 
     def jump_if_zero(self):
         if self.tape[self.pointer] == 0:
-            new_pos = self.pos
-            while self.tokens[new_pos] != ']':
-                new_pos += 1
-
-            self.pos = new_pos + 1
+            self.pos = self.bracket_pairs[self.pos - 1]
 
     def jump_if_not_zero(self):
         if self.tape[self.pointer] != 0:
-            new_pos = self.pos
-            open_brackets = 0
-
-            while new_pos > -1:
-                new_pos -= 1
-                t = self.tokens[new_pos]
-
-                if t == ']':
-                    open_brackets += 1
-                elif t == '[':
-                    open_brackets -= 1
-                else:
-                    continue
-
-                if open_brackets == 0:
-                    break
-
-            self.pos = new_pos
+            self.pos = self.bracket_pairs[self.pos - 1]

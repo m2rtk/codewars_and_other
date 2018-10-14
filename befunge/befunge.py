@@ -1,0 +1,4 @@
+
+
+class BefungeInterpreter:
+    pass # todo
